@@ -10,7 +10,7 @@ def save_results(model, model_name):
         joblib.dump(model, f)
 
 
-def get_saved_results(model_name='model.pkl'):
+def get_saved_model(model_name='model.pkl'):
     print('Deserializing model...')
     with open(model_name, 'rb') as f:
         model = joblib.load(f)
@@ -50,12 +50,16 @@ def train_network():
 
 
 def predict_led():
-    ...
+    model = get_saved_model()
+    x = input('Enter the digit values separated by space: ')
+    x = [int(val) for val in x.split(' ')]
+    x = np.array(x).reshape((7, 1))
+    predictions = model.get_predictions([x])
+    print(f'I think this is a {predictions[0]}')
 
 
 def main():
-    # option = get_option()
-    option = 'train'
+    option = get_option()
     if option == 'train':
         train_network()
     elif option == 'predict':
