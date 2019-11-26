@@ -14,9 +14,7 @@ class NeuralNetwork(object):
                         for x, y in zip(layer_dimensions[:-1], layer_dimensions[1:])]
 
     def feedforward(self, a):
-        """This function is only used to get activations for evaluation.
-
-        It does NOT use dropout"""
+        """This function is only used to get activations for evaluation"""
         for b, w in zip(self.biases, self.weights):
             a = sigmoid(np.dot(w, a) + b)
         return a
@@ -33,11 +31,11 @@ class NeuralNetwork(object):
                 mini_batch = training_data[i *
                                            mini_batch_size: (i + 1)*mini_batch_size]
                 self.update_mini_batch(mini_batch, eta, len(training_data))
-            # self.update(training_data, eta, regularization_parameter)
 
             # testing accuracy
             nailed_cases = self.get_nailed_cases(training_data)
-            print(f"Epoch {j}: {nailed_cases}/{len(training_data)}\n")
+            print(
+                f"Epoch {j}: {nailed_cases}/{len(training_data)}, cost: {self.calculate_cost(training_data)}\n")
 
     def get_predictions(self, X):
         return [np.argmax(self.feedforward(x)) for x in X]
@@ -50,30 +48,24 @@ class NeuralNetwork(object):
             nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
 
-        # L2 regularization
+        # Update weights and biases
         self.weights = [w + vw for w, vw in zip(self.weights, nabla_w)]
         self.biases = [b + vb for b, vb in zip(self.biases, nabla_b)]
 
     def back_propagation(self, x, y):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
-
         # feedforward
         activation = x
         activations = [x]  # list to store all the activations, layer by layer
         zs = []  # list to store all the z vectors, layer by layer
         for b, w in zip(self.biases, self.weights):
-            z = np.dot(w, activation)+b
+            z = np.dot(w, activation) + b
             zs.append(z)
             activation = sigmoid(z)
             activations.append(activation)
-        # Using softmax for the last layer
-        # Course 4, slide 27 (Neural Networks)
-        # sum_of_values = sum([np.exp(z) for z in zs[-1]])
-        # activations[-1] = [np.exp(z)/sum_of_values for z in zs[-1]]
 
-        # # Using the derivative of Cross Entropy here
-        delta = activations[-1] - y
+        delta = (y - activations[-1]) * sigmoid_prime(zs[-1])
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
 
@@ -90,6 +82,16 @@ class NeuralNetwork(object):
         test_results = [(np.argmax(self.feedforward(x)), np.argmax(y))
                         for (x, y) in test_data]
         return sum(int(x == y) for (x, y) in test_results)
+
+    def calculate_cost(self, training_data):
+        truth = [x[1] for x in training_data]
+        outputs = [self.feedforward(x[0]) for x in training_data]
+        suma = 0
+        for y, t in zip(outputs, truth):
+            cost_for_this_instance = (y - t)**2
+            suma += sum(cost_for_this_instance)
+
+        return suma/(2 * len(outputs))
 
 
 def sigmoid(z):
