@@ -19,7 +19,7 @@ class NeuralNetwork(object):
             a = sigmoid(np.dot(w, a) + b)
         return a
 
-    def fit(self, training_data, epochs, eta=0.5, mini_batch_size=1):
+    def fit(self, training_data, epochs, eta=0.5, mini_batch_size=1, threshold=0.001):
         no_of_mini_batches = len(training_data)//mini_batch_size
         if len(training_data) % mini_batch_size > 0:
             no_of_mini_batches += 1
@@ -34,8 +34,11 @@ class NeuralNetwork(object):
 
             # testing accuracy
             nailed_cases = self.get_nailed_cases(training_data)
+            cost = self.calculate_cost(training_data)
             print(
-                f"Epoch {j}: {nailed_cases}/{len(training_data)}, cost: {self.calculate_cost(training_data)}\n")
+                f"Epoch {j}: {nailed_cases}/{len(training_data)}, cost: {cost}\n")
+            if cost <= threshold:
+                break
 
     def get_predictions(self, X):
         return [np.argmax(self.feedforward(x)) for x in X]
